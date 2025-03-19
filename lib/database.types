@@ -1,0 +1,327 @@
+export type Json =
+| string
+| number
+| boolean
+| null
+| { [key: string]: Json | undefined }
+| Json[]
+
+export interface Database {
+public: {
+  Tables: {
+    seasons: {
+      Row: {
+        id: string
+        title: string
+        sport: string
+        sport_id: string | null
+        year: number
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        id?: string
+        title: string
+        sport: string
+        sport_id?: string | null
+        year: number
+        created_at?: string
+        updated_at?: string
+      }
+      Update: {
+        id?: string
+        title?: string
+        sport?: string
+        sport_id?: string | null
+        year?: number
+        created_at?: string
+        updated_at?: string
+      }
+    }
+    games: {
+      Row: {
+        id: string
+        season_id: string
+        title: string
+        date: string
+        event_start_time: string
+        location: string
+        theme: string | null
+        title_sponsor: string | null
+        broadcast_network: string | null
+        giveaway: string | null
+        status: string
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        id?: string
+        season_id: string
+        title: string
+        date: string
+        event_start_time: string
+        location: string
+        theme?: string | null
+        title_sponsor?: string | null
+        broadcast_network?: string | null
+        giveaway?: string | null
+        status?: string
+        created_at?: string
+        updated_at?: string
+      }
+      Update: {
+        id?: string
+        season_id?: string
+        title?: string
+        date?: string
+        event_start_time?: string
+        location?: string
+        theme?: string | null
+        title_sponsor?: string | null
+        broadcast_network?: string | null
+        giveaway?: string | null
+        status?: string
+        created_at?: string
+        updated_at?: string
+      }
+    }
+    sponsors: {
+      Row: {
+        id: string
+        name: string
+        contact_name: string | null
+        contact_email: string | null
+        contact_phone: string | null
+        notes: string | null
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        id?: string
+        name: string
+        contact_name?: string | null
+        contact_email?: string | null
+        contact_phone?: string | null
+        notes?: string | null
+        created_at?: string
+        updated_at?: string
+      }
+      Update: {
+        id?: string
+        name?: string
+        contact_name?: string | null
+        contact_email?: string | null
+        contact_phone?: string | null
+        notes?: string | null
+        created_at?: string
+        updated_at?: string
+      }
+    }
+    timeline_events: {
+      Row: {
+        id: string
+        game_id: string
+        start_time: number
+        title: string
+        category: string | null
+        notes: string | null
+        clock_ref: string | null
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        id?: string
+        game_id: string
+        start_time: number
+        title: string
+        category?: string | null
+        notes?: string | null
+        clock_ref?: string | null
+        created_at?: string
+        updated_at?: string
+      }
+      Update: {
+        id?: string
+        game_id?: string
+        start_time?: number
+        title?: string
+        category?: string | null
+        notes?: string | null
+        clock_ref?: string | null
+        created_at?: string
+        updated_at?: string
+      }
+    }
+    show_flow_items: {
+      Row: {
+        id: string
+        game_id: string
+        item_number: number
+        start_time: string
+        preset_time: string | null
+        duration: string | null
+        clock_ref: string | null
+        location: string | null
+        audio_notes: string | null
+        script_read: string | null
+        board_look: string | null
+        category: string | null
+        private_notes: string | null
+        element_id: string | null
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        id?: string
+        game_id: string
+        item_number: number
+        start_time: string
+        preset_time?: string | null
+        duration?: string | null
+        clock_ref?: string | null
+        location?: string | null
+        audio_notes?: string | null
+        script_read?: string | null
+        board_look?: string | null
+        category?: string | null
+        private_notes?: string | null
+        element_id?: string | null
+        created_at?: string
+        updated_at?: string
+      }
+      Update: {
+        id?: string
+        game_id?: string
+        item_number?: number
+        start_time?: string
+        preset_time?: string | null
+        duration?: string | null
+        clock_ref?: string | null
+        location?: string | null
+        audio_notes?: string | null
+        script_read?: string | null
+        board_look?: string | null
+        category?: string | null
+        private_notes?: string | null
+        element_id?: string | null
+        created_at?: string
+        updated_at?: string
+      }
+    }
+    elements: {
+      Row: {
+        id: string
+        name: string
+        type: string
+        sponsor_id: string | null
+        supported_sports: Json
+        script_template: string | null
+        is_permanent: boolean
+        default_offset: string | null
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        id?: string
+        name: string
+        type: string
+        sponsor_id?: string | null
+        supported_sports?: Json
+        script_template?: string | null
+        is_permanent?: boolean
+        default_offset?: string | null
+        created_at?: string
+        updated_at?: string
+      }
+      Update: {
+        id?: string
+        name?: string
+        type?: string
+        sponsor_id?: string | null
+        supported_sports?: Json
+        script_template?: string | null
+        is_permanent?: boolean
+        default_offset?: string | null
+        created_at?: string
+        updated_at?: string
+      }
+    }
+    element_usage: {
+      Row: {
+        id: string
+        element_id: string
+        game_id: string
+        show_flow_item_id: string | null
+        placeholders: Json | null
+        created_at: string
+      }
+      Insert: {
+        id?: string
+        element_id: string
+        game_id: string
+        show_flow_item_id?: string | null
+        placeholders?: Json | null
+        created_at?: string
+      }
+      Update: {
+        id?: string
+        element_id?: string
+        game_id?: string
+        show_flow_item_id?: string | null
+        placeholders?: Json | null
+        created_at?: string
+      }
+    }
+    sports: {
+      Row: {
+        id: string
+        name: string
+        created_at: string
+        updated_at: string
+      }
+      Insert: {
+        id?: string
+        name: string
+        created_at?: string
+        updated_at?: string
+      }
+      Update: {
+        id?: string
+        name?: string
+        created_at?: string
+        updated_at?: string
+      }
+    }
+    element_sports: {
+      Row: {
+        element_id: string
+        sport_id: string
+        created_at: string
+      }
+      Insert: {
+        element_id: string
+        sport_id: string
+        created_at?: string
+      }
+      Update: {
+        element_id?: string
+        sport_id?: string
+        created_at?: string
+      }
+    }
+  }
+  Views: {
+    [_ in never]: never
+  }
+  Functions: {
+    [_ in never]: never
+  }
+  Enums: {
+    [_ in never]: never
+  }
+  CompositeTypes: {
+    [_ in never]: never
+  }
+}
+}
+
