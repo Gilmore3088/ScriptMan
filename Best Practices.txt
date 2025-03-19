@@ -1,0 +1,143 @@
+Project Instructions & Best Practices
+1. Setup & Environment
+Version Control
+
+Use a Git repository (e.g., GitHub, GitLab) for all source code.
+Maintain branching (feature branches, dev branch, main branch) for controlled merges.
+Tech Stack
+
+Frontend: React, Vue, or Angular. Choose one modern framework and stick with it for consistency.
+Backend: Supabase (PostgreSQL + Storage).
+Package Manager: npm or yarn for dependencies if using JavaScript/TypeScript.
+Supabase Project Setup
+
+Create a Supabase project (in the Supabase dashboard).
+Enable relevant extensions (pgcrypto or uuid-ossp) for UUID generation.
+Configure buckets in Storage for file attachments.
+Optional: Set up Row-Level Security (RLS) if multi-user features or advanced permissions are required.
+Local Development
+
+Install Supabase CLI (optional) to run local dev environment or connect to your remote dev instance.
+Use environment variables (e.g., .env) for your Supabase URL and anon key.
+Plan for a dev and production environment (separate Supabase projects or schemas).
+2. Database Schema & Migrations
+Define Migrations
+
+Keep your create table statements in SQL migration files (e.g., 001_create_tables.sql, 002_add_columns.sql).
+This ensures consistent setup across dev, staging, and production.
+Core Tables
+
+seasons, games, show_flow_items, components, assets, plus join tables (event_components, etc.).
+Add or modify columns as new requirements arise, versioning them with migration files.
+Data Consistency
+
+Use foreign keys with on delete cascade to maintain relational integrity (e.g., if a game is deleted, all related show_flow_items are automatically removed).
+Index frequently queried columns (e.g., game_id on show_flow_items).
+Backups & Restores
+
+Configure database backups in Supabase so you can restore if data is lost or corrupted.
+Periodically test the restore process to ensure reliability.
+3. File Storage & Attachments
+Supabase Buckets
+
+Create a bucket (e.g., scriptman-assets) for storing images, PDFs, videos, etc.
+Set appropriate privacy settings: public or signed URLs only.
+Uploading & Linking
+
+Upload via the Supabase client (front-end or serverless) with chunked support if files can exceed standard size.
+Store file metadata in the assets table, including url, file_size_bytes, etc.
+Large File Handling
+
+Up to 2GB attachments means you may need chunked upload.
+Provide feedback (progress bars) in the UI for large file uploads.
+4. Frontend Architecture
+Directory Structure
+
+Keep a modular structure:
+components/ – Reusable UI components
+pages/ or views/ – Page-level components (Seasons Dashboard, Season Page, Show-Flow Editor)
+services/ – Supabase API wrappers and business logic
+store/ – If using a state management library (e.g., Redux, Vuex, or Zustand).
+UI/UX
+
+Minimalistic approach for Season Dashboard, Game Cards, Show-Flow Editor.
+Emphasize print-friendly designs for show-flow PDFs.
+Maintain responsive design where possible (desktop is primary, but partial mobile or tablet support is often needed).
+Print & PDF Export
+
+You can generate the PDF client-side (using libraries like react-to-print, html2canvas, or jspdf) or server-side (via Supabase Edge Functions or your own server).
+Support pagination, orientation (portrait/landscape), scale-to-fit.
+5. Show-Flow Editor & Timeline
+Show-Flow Table
+
+A spreadsheet-like UI for line-by-line items (start time, sponsor read, location, etc.).
+Allow bulk editing (time shift multiple rows) if feasible.
+Provide inline validation (e.g., highlight incomplete mandatory fields).
+Drag-and-Drop Timeline (Optional / Future)
+
+If a Gantt-style timeline is needed, use libraries like react-dnd or third-party timeline libs.
+Ensure performance with large data sets (lazy loading or virtualized rendering).
+Global vs. Local Sponsor Reads
+
+If the user updates a “component” (sponsor read), ask whether to update all references or only the local item.
+6. Authentication & Authorization (Optional)
+Supabase Auth
+
+If your project requires user accounts, use Supabase Auth for signups/logins.
+Protect certain routes or database tables with RLS policies so only authorized users can read/write specific seasons.
+Roles & Permissions
+
+If multiple roles (admin, editor, viewer) are needed, define them in your schema or logic.
+Decide if certain features (e.g., “Delete Season”) are restricted to admins.
+7. QA & Testing
+Automated Tests
+
+Implement unit tests for data-model logic (e.g., creation, duplication).
+If possible, add integration tests to verify the entire flow (creating a season → adding games → printing PDF).
+Staging Environment
+
+Mirror your production environment.
+Test large file uploads, real data volumes, and PDF exports before going live.
+User Acceptance Testing (UAT)
+
+Provide prototypes or staging links for the production team, sponsors, or operations staff to test.
+Gather feedback on UI clarity, performance, and printing.
+8. Performance & Scalability
+Indexing
+
+Add indexes on columns you frequently filter by (e.g., season_id in games, game_id in show_flow_items).
+Consider composite indexes if queries often filter by multiple fields.
+Pagination
+
+For dashboards with many seasons or show-flow items, use pagination or infinite scroll.
+Improves load times and user experience.
+File Upload Speed
+
+Large file uploads might need chunked approach to avoid timeouts.
+Show progress bars and handle retries gracefully.
+Load Testing
+
+If expecting large user concurrency, do basic load tests on critical endpoints (e.g., adding show-flow items, generating PDFs).
+9. Maintenance & Ongoing Updates
+Regular Updates
+
+Keep dependencies up to date (Supabase client, your chosen front-end framework).
+Watch for changes in Supabase API or library versions.
+Bug Tracking
+
+Use an issue tracker (e.g., GitHub Issues, Jira) for feature requests and bug reports.
+Prioritize fixes that block the printing workflow or sponsor read accuracy.
+Documentation
+
+Maintain a README or Wiki explaining how to set up the project, run migrations, handle file uploads, etc.
+Include any tips for customizing certain behaviors (e.g., sponsor read versioning).
+Archiving Seasons
+
+After a season is done, mark it as “archived” to avoid clutter.
+Decide how to handle data retention for compliance or reference.
+10. Key Takeaways
+Keep It Simple: Focus on clarity in the UI (especially for printing the final show-flow).
+Supabase Integration: Ensure your DB schema is well-structured with foreign keys and correct referencing.
+Print-First Mindset: Remember that many stadium crews rely on paper scripts. Provide robust PDF exports.
+Performance & Files: 2GB attachments mean chunked uploads and indexing are crucial.
+Flexibility: Sponsor reads, game times, and show-flow items can change last minute—make the UI and data model flexible to accommodate those rapid changes.

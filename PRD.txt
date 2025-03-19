@@ -1,0 +1,192 @@
+Product Requirements Document (PRD)
+1. Overview
+Product Name ScriptMan – A Game Production Canvas & Show-Flow Editor
+Document Date [Date]
+Author(s) [Name(s)]
+Status Draft  Final
+Version 1.0
+Last Updated [Date]
+
+1.1 Summary
+ScriptMan is a tool to create, manage, and print detailed game-day production scripts for sporting events. It includes
+
+A Season Dashboard to manage multiple seasons.
+A Season Page for each season, listing multiple games.
+Game Cards summarizing each game (opponent, date, sponsor, theme).
+Add Season form for quick creation of new seasons.
+A Show-Flow Editor (line-by-line script) that emphasizes a print-first workflow for event staff.
+Integration with Supabase (PostgreSQL + Storage) to store data and large files (up to 2GB).
+1.2 Background & Context
+Stadium operations often juggle spreadsheets and word documents to schedule sponsor reads, promotions, or band cues. This manual approach can be error-prone. ScriptMan simplifies these tasks by centralizing everything in a single system—season structure, games, and show-flow items—with robust print capabilities for game-day usage.
+
+1.3 Objectives & Success Metrics
+Objectives
+
+Provide a drag-and-drop or table-based interface for creating and editing show-flow items.
+Support multiple seasons and games within those seasons.
+Emphasize print-friendly output for staff.
+Allow large file attachments (up to 2GB) for Jumbotron videos, sponsor ads, etc.
+Offer reusable components (sponsor reads) with global vs. local updates.
+Success Metrics
+
+Adoption Rate Number of stadiumsteams using ScriptMan.
+Reduced Errors Fewer missed sponsor reads or scheduling conflicts.
+Efficient Printing Streamlined process to produce multi-page show-flow PDFs.
+Scalability System can handle many games, with hundreds of line items each.
+2. User Personas & Use Cases
+2.1 User Personas
+Production Manager  Game-Day Director
+
+Builds out entire show-flow, coordinates sponsor obligations, ensures all timeline details are accurate.
+Operations Staff  Floor Managers
+
+Uses printed scripts to track real-time changes or follow the schedule during the game.
+Marketing  Sponsorship Coordinators
+
+Maintains sponsor reads in a library of “components,” ensuring correct verbiage is used.
+2.2 Use Cases
+Managing Multiple Seasons
+
+As a Production Manager, I want a top-level dashboard of all seasons so I can quickly see which ones are active and add new ones.
+Adding a New Season
+
+As a user, I want a simple form to create a new season (title, sport, year), so I can start adding games.
+Viewing a Season’s Games
+
+As a user, I want to see all games within a season (dates, opponents, sponsors) so I can quickly jump in and edit each game’s show-flow.
+Creating Show-Flow Items
+
+As a Production Manager, I want to add line-by-line script items for sponsor reads, band appearances, promotions, and set them to specific times.
+Printing the Show-Flow
+
+As a Stadium Operator, I need a PDF with large, readable text that includes start times, sponsor text, location, and notes, so staff can use it on paper.
+File Attachments
+
+As a Production Crew Member, I attach images or PDFs for scoreboard visuals or stadium signage to each show-flow item.
+3. Features & Requirements
+3.1 Feature List
+Seasons Dashboard
+
+Displays a list (or grid) of all seasons.
+Allows quick “Add Season” action.
+Add Season Form
+
+Collects title, sport, year, and optional notesstatus.
+Creates a new season record in the database.
+Season Page
+
+Lists all games in that season.
+Each game appears as a Game Card with date, opponent, sponsor, theme, etc.
+Game Card
+
+Summarizes key info event start time, game start time, theme, title sponsor, date, stadium, opponent, TV broadcast, and any giveaways.
+Buttons to open the Show-Flow or Timeline view.
+Show-Flow Editor
+
+Line-by-line table (or spreadsheet-style) with columns start time, preset time, duration, sponsor read text, location, etc.
+Optionally link or reuse “components.”
+Components Library
+
+Reusable sponsor reads or promo items.
+“Global vs. Local” update logic to apply changes across multiple references.
+File Attachments
+
+Large file support (up to 2GB), stored in Supabase Storage.
+Ability to link assets to show-flow lines.
+Print & PDF Export
+
+Print-first design easy to read, large fonts, multi-page support, scale-to-fit, orientation options (portraitlandscape).
+3.2 Functional Requirements
+Season & Game CRUD
+
+Create, read, update, delete seasons and games.
+Timestamps for creation and updates.
+Show-Flow CRUD
+
+Each show-flow item includes item number, times (text-based), sponsor read, location, audio cues, board looks, etc.
+Sponsorship Components
+
+Reuse sponsor copy in multiple show-flow items.
+If a sponsor read changes, user can update all references (global) or only one (local).
+File Handling
+
+Chunked uploads for large files.
+Database references to storage URLs.
+Printing
+
+Generate a table-based layout in PDF or HTML (client-side or server-side).
+Page breaks, orientation, and margin controls.
+3.3 Non-Functional Requirements
+Performance
+Handle multiple seasons, each with multiple games (5–20) and each game potentially having 100+ show-flow items.
+Scalability
+Up to 2GB file attachments.
+Supabase for DB and Storage.
+4. Design Specifications
+4.1 UIUX Components
+Seasons Dashboard
+
+A top-level page listing all seasons in a grid or list.
+Includes an “Add Season” button.
+Add Season Form
+
+Fields Title, Sport, Year, optional notes.
+“Create” or “Cancel” actions.
+Season Page
+
+Lists all games as Game Cards.
+Each card shows datetime, location, sponsor, theme, giveaway, etc.
+Buttons “Show-Flow,” “Timeline,” “Duplicate,” “Delete.”
+Game Card
+
+Displays
+Opponent  Title
+Game start time & eventgates open time
+Theme, title sponsor
+Stadium location
+Broadcast network (logo or text)
+Giveaway info
+Show-Flow Editor
+
+Spreadsheet-like table with columns
+Item #, Start Time, Preset Time, Duration, Private Notes, Clock Ref, Location, Audio Notes, Script Read, Board Look, etc.
+Optional reordering, editing, and quick linking to sponsor components.
+Print & Export
+
+Provide a button to generate a PDF (or print preview).
+Legible for staff, with minimal color and clear layout.
+5. Data Model (Supabase  PostgreSQL)
+Below is the core schema. Fields can be adjusted as needed
+
+seasons
+
+id (uuid PK, default gen_random_uuid())
+title (text), sport (text), year (int)
+created_at (timestamp), updated_at (timestamp)
+games
+
+id (uuid PK), season_id (FK - seasons.id)
+title (text), date (timestamp), event_start_time (timestamp), location (text)
+theme (text), title_sponsor (text), broadcast_network (text), giveaway (text)
+created_at (timestamp), updated_at (timestamp)
+show_flow_items
+
+id (uuid PK), game_id (FK - games.id)
+item_number (int), start_time (text), preset_time (text), duration (text), clock_ref (text)
+private_notes (text), location (text), audio_notes (text), script_read (text)
+board_look (text), main (text), aux (text), lower_third (text), ribbon (text), control_room (text), category (text)
+created_at (timestamp), updated_at (timestamp)
+components (Reusable sponsor reads)
+
+id (uuid PK), name (text), type (text), version (int), is_global (bool)
+created_at (timestamp), updated_at (timestamp)
+event_components (Join Table)
+
+id (uuid PK), show_flow_id (FK - show_flow_items.id), component_id (FK - components.id)
+assets
+
+id (uuid PK), file_name (text), file_type (text), file_size_bytes (bigint), url (text)
+uploaded_at (timestamp)
+show_flow_assets (Optional Join Table)
+
+id (uuid PK), show_flow_id (FK - show_flow_items.id), asset_id (FK - assets.id)

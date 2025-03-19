@@ -1,0 +1,158 @@
+ScriptMan Brand Guide
+1. Brand Identity
+Brand Name: ScriptMan
+Tagline (optional): “Your Game-Day Show-Flow Simplified”
+Core Values:
+Clarity: The design should focus on legibility and straightforward communication.
+Dependability: Communicate trust and reliability for crucial game operations.
+Efficiency: Reflect a modern, streamlined solution for stadium events.
+2. Logo & Usage
+Logo Concept
+
+A simple wordmark reading “ScriptMan,” with a subtle icon (optional) that hints at a timeline or document.
+The icon might be a small stylized clipboard, timeline bar, or a minimal checkmark representing a completed script.
+Primary Logo
+
+Wordmark: “ScriptMan” in a clean, sans-serif font.
+Color: Dark charcoal or black for strong contrast on light backgrounds.
+Icon Placement: If used, place to the left or integrated with the “S” in “ScriptMan.”
+Clear Space
+
+Keep a margin of at least 0.5x the logo’s height around all sides to avoid crowding.
+Size & Scaling
+
+Ensure the minimum width is not so small that letters become illegible (e.g., ~120px wide in digital contexts).
+Maintain aspect ratio when resizing.
+Logo Variants
+
+Light Background Version: Black or dark charcoal text.
+Dark Background Version: White text or a light neutral with the same proportions.
+3. Color Palette
+The color scheme prioritizes legibility, minimalism, and a neutral tone suitable for printing (both color and black-and-white).
+
+Primary Color
+
+Dark Charcoal (e.g., #2D2D2D or a near-black)
+Used for text (headings, body) and key UI elements to ensure strong contrast.
+Secondary / Accent Color
+
+Steel Blue (e.g., #4A6FA5)
+Subtly used for links, minor highlights, or small UI components to add visual interest without overwhelming.
+Neutral Grays
+
+Light Gray (#F5F5F5 or #EDEDED for backgrounds).
+Mid Gray (#C4C4C4) for borders, inactive states, or dividing lines.
+Success / Warning / Error (Optional)
+
+Success: A subdued green (e.g., #5CB85C) for positive feedback.
+Warning: A muted yellow/orange (e.g., #F0AD4E) for caution.
+Error: A soft red (e.g., #D9534F) for errors.
+Printing Consideration
+
+Dark Charcoal text on white background remains clean in black-and-white prints.
+Keep accent usage minimal so black-and-white printing still reads clearly.
+4. Typography
+Primary Font
+
+A sans-serif font for both headings and body text (e.g., Roboto, Open Sans, or Arial).
+This ensures high readability on screens and when printed.
+Font Weights
+
+Bold for headings (e.g., <h1>, <h2>).
+Regular for body text.
+Semibold or Medium can be used sparingly for subheadings or emphasis.
+Hierarchy
+
+H1: 24–32 px range (print-friendly), bold.
+H2: 18–24 px, bold or semibold.
+Body: 14–16 px for paragraphs, ensuring ~12–14 pt when printed.
+Line Spacing
+
+Slightly increased line-height (1.4–1.6) for better reading, especially in show-flow tables and printouts.
+5. Layout & UI
+General Layout
+
+Clean, open spacing: 16–24 px margins around content blocks.
+Minimal visual clutter: Rely on subtle lines, shapes, or whitespace to separate sections.
+Navigation
+
+Top Nav or Side Nav with simple text or minimal icons.
+Keep the brand mark (logo) in the nav, top left corner.
+Components
+
+Buttons: Rounded or slightly squared corners, with primary color for primary actions (“Create Season”), secondary color for less critical actions.
+Cards: Light gray backgrounds or outlines to group content (e.g., for a game card).
+Show-Flow Table
+
+Crisp grid lines in light gray (#EDEDED) to delineate columns.
+Bold headings in the top row, 14–16 px for clarity.
+Hover or selected row highlights in the secondary accent color (steel blue at 10–20% opacity).
+Printing Focus
+
+Ensure text remains black or dark charcoal for maximum clarity.
+Avoid heavy blocks of color behind text that might cause legibility issues in black-and-white prints.
+6. Iconography (Optional)
+Style
+
+Line-based or filled icons that are simple, with minimal detail.
+Consistent stroke width or fill style.
+Common Icons
+
+Add / Plus: For creating new seasons, new games, etc.
+Edit (pencil): For editing season or game details.
+Print (printer icon): For PDF export or print action.
+Duplicate (copy): If duplicating a game or show-flow.
+Trash / Archive: For deleting or archiving.
+Size & Usage
+
+Typically 16–24 px in the UI; scale up for emphasis.
+Keep color consistent with the brand’s accent or neutral palette.
+7. Imagery & Photography (If Used)
+Contextual Images
+
+Sports stadium photos or stylized background images can be used sparingly in marketing pages, but keep the main UI mostly textual.
+Avoid cluttered backgrounds on functional pages (like the show-flow editor), focusing on clarity.
+Tone
+
+Energetic but professional.
+Photos that reflect stadium excitement, while the UI remains simple.
+8. Brand Voice & Messaging
+Voice
+
+Professional, helpful, and concise—the system is used by time-pressed event staff.
+Minimal jargon; direct, user-friendly language.
+Copy Guidelines
+
+Use short, clear sentences in the UI (e.g., “Create a new Season” or “Add Show-Flow Item”).
+Provide helpful tooltips or placeholders where needed, but avoid overloading users with text.
+9. Putting It All Together
+Consistency
+
+Reuse the same color, typography, and icon styles across all pages—Season Dashboard, Show-Flow Editor, Print Layouts, etc.
+Keep the brand’s minimal aesthetic in both digital and printed materials.
+Accessibility
+
+Aim for high contrast (WCAG AA minimum). Dark charcoal on white typically passes.
+Provide text alternatives for icons, especially in PDF exports if possible.
+Examples
+
+Buttons:
+Primary: Dark Charcoal text on a subtle accent background (steel blue at 80–90% opacity), or vice versa if you prefer.
+Secondary: White background, Dark Charcoal border.
+Links: Steel Blue text with underline on hover.
+Headings: “ScriptMan” wordmark or standard headings in the same sans-serif typeface.
+Summary
+The ScriptMan brand is clean, modern, and print-focused, leveraging:
+
+Dark Charcoal for text
+Steel Blue accent
+Neutral Grays for backgrounds/borders
+Sans-Serif typography (14–16 px for body text, 18–32 px for headings)
+Minimal icon usage, cohesive with brand style
+This ensures clarity for stadium event staff who rely on both on-screen navigation and paper show-flows.
+
+
+
+
+
+
