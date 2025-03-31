@@ -71,30 +71,32 @@ export interface Asset {
   uploadedAt: string
 }
 
-// New Sponsor interface for the Sponsorship Roster
+// Add this to your existing types.ts file
+
+export interface Deliverable {
+  type: string
+  description: string
+  quantity: number
+  unitLabel?: string
+  fulfilled?: number
+}
+
 export interface Sponsor {
   id: string
   name: string
+  logo?: string
+  brandColor?: string
+  sports?: string[]
+  seasons?: string[]
   contactName?: string
   contactEmail?: string
   contactPhone?: string
-  brandGuidelines?: string
   contractNotes?: string
   startDate?: string
   endDate?: string
-  // Deliverables
-  mentionsPerGame?: number
-  totalMentionsRequired?: number
-  scoreboardAdsPerGame?: number
-  totalScoreboardAdsRequired?: number
-  halftimeReadsPerGame?: number
-  totalHalftimeReadsRequired?: number
-  otherDeliverables?: string
-  customDeliverables?: CustomDeliverable[] // Add this new field
-  // Status
-  status: "active" | "inactive" | "pending" | "completed"
-  createdAt: string
-  updatedAt: string
+  deliverables?: Deliverable[]
+  createdAt?: string
+  updatedAt?: string
 }
 
 // Add this new interface after the Sponsor interface:
@@ -158,20 +160,27 @@ export interface ElementAsset {
   assetId: string
 }
 
-// Timeline event interface (derived from ShowFlowItem)
+// Add this to your types.ts file if it doesn't already exist
 export interface TimelineEvent {
   id: string
-  gameId: string
-  startTime: number // Seconds from game start
-  endTime?: number // Seconds from game start
+  game_id: string
   title: string
-  components?: string[]
-  notes?: string
-  audioNotes?: string // Add this line
-  clockRef?: string
-  category: string
-  location?: string
-  createdAt?: string
+  start_time: number
+  duration: number
+  category?: string
+  description?: string
+  sponsor_id?: string
+  element_id?: string
+  created_at: string
+  updated_at: string
+  time_offset?: string
+  // This will be populated by our getTimelineEvents function
+  elements?: {
+    id: string
+    name: string
+    type: string
+    script_template?: string
+  }
 }
 
 // Activity interface for tracking user actions

@@ -1,5 +1,30 @@
 import { supabase } from "./supabase"
-import type { Season, Game, Sponsor, Element, TimelineEvent, ShowFlowItem, Sport, ElementUsage } from "./types"
+import type { Season, Game, Element, Sport } from "./types"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import type { Database } from "@/types/supabase"
+
+// Create a singleton instance of the Supabase client
+let supabaseInstance: ReturnType<typeof createClientComponentClient<Database>> | null = null
+
+// Helper function to validate UUID
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  return uuidRegex.test(uuid)
+}
+
+// Fix the getSupabaseClient function to avoid using require()
+export function getSupabaseClient() {
+  // In the browser, always use the client component client
+  if (typeof window !== "undefined") {
+    if (!supabaseInstance) {
+      supabaseInstance = createClientComponentClient<Database>()
+    }
+    return supabaseInstance
+  }
+
+  // On the server, use the imported supabase instance which should have admin privileges
+  return supabase
+}
 
 // Debug helper function
 function logDbOperation(operation: string, details: any) {
@@ -9,19 +34,21 @@ function logDbOperation(operation: string, details: any) {
 // Seasons
 export async function getSeasons() {
   try {
+    const supabase = getSupabaseClient()
     logDbOperation("getSeasons", "Fetching all seasons")
 
+    // Change from sorting by "name" to "created_at" since "name" doesn't exist
     const { data, error } = await supabase.from("seasons").select("*").order("created_at", { ascending: false })
 
     if (error) {
       console.error("Error fetching seasons:", error)
-      throw new Error(`Error fetching seasons: ${error.message}`)
+      return []
     }
 
     return data || []
   } catch (error) {
     console.error("Error in getSeasons:", error)
-    throw error
+    return []
   }
 }
 
@@ -145,9 +172,8 @@ export async function getGame(id: string) {
 // Sponsors
 export async function getSponsors() {
   try {
-    logDbOperation("getSponsors", "Fetching all sponsors")
-
-    const { data, error } = await supabase.from("sponsors").select("*").order("name", { ascending: true })
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase.from("sponsors").select("*").order("name")
 
     if (error) {
       console.error("Error fetching sponsors:", error)
@@ -157,35 +183,86 @@ export async function getSponsors() {
     return data || []
   } catch (error) {
     console.error("Error in getSponsors:", error)
-    throw error
+    // Return empty array instead of throwing to prevent page from crashing
+    return []
   }
 }
 
 export async function getSponsor(id: string) {
   try {
-    logDbOperation("getSponsor", { id })
-
-    const { data, error } = await supabase.from("sponsors").select("*").eq("id", id)
-
-    if (error) {
-      console.error(`Error fetching sponsor ${id}:`, error)
-      throw new Error(`Error fetching sponsor: ${error.message}`)
-    }
-
-    // Check if we got any data back
-    if (!data || data.length === 0) {
-      console.log(`No sponsor found with ID ${id}`)
+    // If the ID is "new" or not a valid UUID, return null
+    if (id === "new" || !isValidUUID(id)) {
       return null
     }
 
-    // If we got multiple rows (shouldn't happen with a primary key), log a warning and return the first one
-    if (data.length > 1) {
-      console.warn(`Multiple sponsors found with ID ${id}, using the first one`)
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase.from("sponsors").select("*").eq("id", id).single()
+
+    if (error) {
+      console.error("Error fetching sponsor:", error)
+      return null
     }
 
-    return data[0]
+    return data
   } catch (error) {
-    console.error(`Error in getSponsor for ID ${id}:`, error)
+    console.error("Error in getSponsor:", error)
+    return null
+  }
+}
+
+// Update the createSponsor function to use the admin client:
+export async function createSponsor(sponsorData: any) {
+  try {
+    // Use the supabase instance directly
+    // This should be the admin client on the server
+    const { data, error } = await supabase.from("sponsors").insert(sponsorData).select().single()
+
+    if (error) {
+      console.error("Error creating sponsor:", error)
+      throw new Error(`Error creating sponsor: ${error.message}`)
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error in createSponsor:", error)
+    throw error
+  }
+}
+
+export async function updateSponsor(id: string, sponsorData: any) {
+  try {
+    const supabase = getSupabaseClient()
+
+    // Update the sponsor
+    const { data, error } = await supabase.from("sponsors").update(sponsorData).eq("id", id).select().single()
+
+    if (error) {
+      console.error("Error updating sponsor:", error)
+      throw new Error(`Error updating sponsor: ${error.message}`)
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error in updateSponsor:", error)
+    throw error
+  }
+}
+
+export async function deleteSponsor(id: string) {
+  try {
+    const supabase = getSupabaseClient()
+
+    // Delete the sponsor
+    const { error } = await supabase.from("sponsors").delete().eq("id", id)
+
+    if (error) {
+      console.error("Error deleting sponsor:", error)
+      throw new Error(`Error deleting sponsor: ${error.message}`)
+    }
+
+    return true
+  } catch (error) {
+    console.error("Error in deleteSponsor:", error)
     throw error
   }
 }
@@ -193,19 +270,21 @@ export async function getSponsor(id: string) {
 // Sports
 export async function getSports() {
   try {
+    const supabase = getSupabaseClient()
     logDbOperation("getSports", "Fetching all sports")
 
-    const { data, error } = await supabase.from("sports").select("*").order("name", { ascending: true })
+    // Change from sorting by "name" to "created_at" since "name" might not exist
+    const { data, error } = await supabase.from("sports").select("*").order("created_at", { ascending: false })
 
     if (error) {
       console.error("Error fetching sports:", error)
-      throw new Error(`Error fetching sports: ${error.message}`)
+      return []
     }
 
     return data || []
   } catch (error) {
     console.error("Error in getSports:", error)
-    throw error
+    return []
   }
 }
 
@@ -442,6 +521,22 @@ export async function deleteElement(id: string) {
 
 // Add this function after the getElement function and before getTimelineEvents
 
+/**
+ * Retrieves all sponsor elements from the database
+ */
+export async function getSponsorElements() {
+  const supabase = getSupabaseClient()
+
+  const { data, error } = await supabase.from("sponsor_elements").select("*").order("name")
+
+  if (error) {
+    console.error("Error fetching sponsor elements:", error)
+    throw new Error(`Error fetching sponsor elements: ${error.message}`)
+  }
+
+  return data || []
+}
+
 // Components
 export async function getComponent(id: string) {
   try {
@@ -491,26 +586,194 @@ export async function getComponents() {
 }
 
 // Timeline Events
-export async function getTimelineEvents(gameId: string) {
-  try {
-    logDbOperation("getTimelineEvents", { gameId })
+export async function createTimelineEvent({
+  gameId,
+  title,
+  description,
+  timeOffset,
+  elementId,
+}: {
+  gameId: string
+  title: string
+  description?: string
+  timeOffset: string
+  elementId?: string
+}) {
+  const supabase = createClientComponentClient<Database>()
 
-    const { data, error } = await supabase
-      .from("timeline_events")
-      .select("*")
-      .eq("game_id", gameId)
-      .order("start_time", { ascending: true })
+  console.log("Creating timeline event with data:", {
+    game_id: gameId,
+    title,
+    description,
+    time_offset: timeOffset,
+    element_id: elementId,
+  })
 
-    if (error) {
-      console.error(`Error fetching timeline events for game ${gameId}:`, error)
-      throw new Error(`Error fetching timeline events: ${error.message}`)
-    }
+  // Insert the timeline event with only the fields that exist in the table
+  const { data, error } = await supabase
+    .from("timeline_events")
+    .insert({
+      game_id: gameId,
+      title,
+      description,
+      time_offset: timeOffset,
+      element_id: elementId,
+    })
+    .select()
 
-    return data || []
-  } catch (error) {
-    console.error(`Error in getTimelineEvents for game ${gameId}:`, error)
-    throw error
+  if (error) {
+    console.error("Error creating timeline event:", error)
+    throw new Error(`Error creating timeline event: ${error.message}`)
   }
+
+  return data
+}
+
+// Add the updateTimelineEvent function
+export async function updateTimelineEvent(eventData) {
+  const supabase = getSupabaseClient()
+
+  const { data, error } = await supabase
+    .from("timeline_events")
+    .update({
+      title: eventData.title,
+      description: eventData.description,
+      time_offset: eventData.timeOffset,
+      element_id: eventData.elementId,
+      type: eventData.type,
+      is_permanent: eventData.is_permanent,
+      sponsor_id: eventData.sponsor_id,
+      custom_assets: eventData.custom_assets,
+      duration: eventData.duration,
+    })
+    .eq("id", eventData.id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error updating timeline event:", error)
+    throw new Error(`Failed to update timeline event: ${error.message}`)
+  }
+
+  return data
+}
+
+// Add the updateTimelineEvent function
+export async function updateTimelineEvent_old({
+  id,
+  title,
+  description,
+  timeOffset,
+  elementId,
+  gameId,
+}: {
+  id: string
+  title: string
+  description?: string
+  timeOffset: string
+  elementId?: string
+  gameId: string
+}) {
+  const supabase = createClientComponentClient<Database>()
+
+  console.log("Updating timeline event with data:", {
+    id,
+    title,
+    description,
+    time_offset: timeOffset,
+    element_id: elementId,
+    game_id: gameId,
+  })
+
+  // Update the timeline event
+  const { data, error } = await supabase
+    .from("timeline_events")
+    .update({
+      title,
+      description,
+      time_offset: timeOffset,
+      element_id: elementId,
+      game_id: gameId,
+    })
+    .eq("id", id)
+    .select()
+
+  if (error) {
+    console.error("Error updating timeline event:", error)
+    throw new Error(`Error updating timeline event: ${error.message}`)
+  }
+
+  return data
+}
+
+// Get timeline events for a game
+export async function getTimelineEvents(gameId: string) {
+  const supabase = createClientComponentClient<Database>()
+
+  console.log("Fetching timeline events for game:", gameId)
+
+  // First, fetch the timeline events without trying to join with elements
+  const { data: events, error } = await supabase
+    .from("timeline_events")
+    .select("*")
+    .eq("game_id", gameId)
+    .order("time_offset")
+
+  if (error) {
+    console.error("Error fetching timeline events:", error)
+    throw new Error(`Error fetching timeline events: ${error.message}`)
+  }
+
+  // If we have events with element_ids, fetch those elements separately
+  if (events && events.length > 0) {
+    // Get all unique element IDs
+    const elementIds = events.filter((event) => event.element_id).map((event) => event.element_id)
+
+    if (elementIds.length > 0) {
+      // Fetch the elements
+      const { data: elements, error: elementsError } = await supabase
+        .from("elements")
+        .select("id, name, type, script_template")
+        .in("id", elementIds)
+
+      if (elementsError) {
+        console.error("Error fetching elements for timeline events:", elementsError)
+        // Don't throw here, just log the error and continue with the events we have
+      }
+
+      // If we got elements, attach them to the events
+      if (elements && elements.length > 0) {
+        // Create a map for quick lookup
+        const elementsMap = elements.reduce((map, element) => {
+          map[element.id] = element
+          return map
+        }, {})
+
+        // Attach elements to events
+        events.forEach((event) => {
+          if (event.element_id && elementsMap[event.element_id]) {
+            event.elements = elementsMap[event.element_id]
+          }
+        })
+      }
+    }
+  }
+
+  return events || []
+}
+
+// Delete a timeline event
+export async function deleteTimelineEvent(id: string) {
+  const supabase = createClientComponentClient<Database>()
+
+  const { error } = await supabase.from("timeline_events").delete().eq("id", id)
+
+  if (error) {
+    console.error("Error deleting timeline event:", error)
+    throw new Error(`Error deleting timeline event: ${error.message}`)
+  }
+
+  return true
 }
 
 // Show Flow Items
@@ -753,623 +1016,53 @@ export async function deleteGame(id: string) {
   }
 }
 
-export async function createSponsor(sponsor: Omit<Sponsor, "id" | "created_at">) {
-  try {
-    logDbOperation("createSponsor", { sponsor })
-
-    const { data, error } = await supabase.from("sponsors").insert([sponsor]).select()
-
-    if (error) {
-      console.error("Error creating sponsor:", error)
-      throw new Error(`Error creating sponsor: ${error.message}`)
-    }
-
-    return data?.[0]
-  } catch (error) {
-    console.error("Error in createSponsor:", error)
-    throw error
-  }
-}
-
-export async function updateSponsor(id: string, sponsor: Partial<Sponsor>) {
-  try {
-    logDbOperation("updateSponsor", { id, sponsor })
-
-    const { data, error } = await supabase.from("sponsors").update(sponsor).eq("id", id).select()
-
-    if (error) {
-      console.error(`Error updating sponsor ${id}:`, error)
-      throw new Error(`Error updating sponsor: ${error.message}`)
-    }
-
-    return data?.[0]
-  } catch (error) {
-    console.error(`Error in updateSponsor for ID ${id}:`, error)
-    throw error
-  }
-}
-
-export async function deleteSponsor(id: string) {
-  try {
-    logDbOperation("deleteSponsor", { id })
-
-    // Update any games that use this sponsor to use null instead
-    const { error: gamesError } = await supabase.from("games").update({ sponsor_id: null }).eq("sponsor_id", id)
-
-    if (gamesError) {
-      console.error(`Error updating games for sponsor ${id}:`, gamesError)
-      throw new Error(`Error updating games for sponsor: ${gamesError.message}`)
-    }
-
-    // Then delete the sponsor
-    const { error } = await supabase.from("sponsors").delete().eq("id", id)
-
-    if (error) {
-      console.error(`Error deleting sponsor ${id}:`, error)
-      throw new Error(`Error deleting sponsor: ${error.message}`)
-    }
-
-    return true
-  } catch (error) {
-    console.error(`Error in deleteSponsor for ID ${id}:`, error)
-    throw error
-  }
-}
-
-// Element Usage
-export async function getElementUsage(elementId: string) {
-  try {
-    logDbOperation("getElementUsage", { elementId })
-
-    const { data, error } = await supabase
-      .from("element_usage")
-      .select("*, games:game_id(*)")
-      .eq("element_id", elementId)
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error(`Error fetching usage for element ${elementId}:`, error)
-      throw new Error(`Error fetching element usage: ${error.message}`)
-    }
-
-    return data || []
-  } catch (error) {
-    console.error(`Error in getElementUsage for element ${elementId}:`, error)
-    throw error
-  }
-}
-
-export async function createElementUsage(usage: Omit<ElementUsage, "id" | "createdAt">) {
-  try {
-    logDbOperation("createElementUsage", { usage })
-
-    // Transform the data to match the database schema
-    const dbUsage = {
-      element_id: usage.elementId,
-      game_id: usage.gameId,
-      show_flow_item_id: usage.showFlowItemId,
-      placeholders: usage.placeholders,
-    }
-
-    const { data, error } = await supabase.from("element_usage").insert([dbUsage]).select()
-
-    if (error) {
-      console.error("Error creating element usage:", error)
-      throw new Error(`Error creating element usage: ${error.message}`)
-    }
-
-    return data?.[0]
-  } catch (error) {
-    console.error("Error in createElementUsage:", error)
-    throw error
-  }
-}
-
-// Update the createTimelineEvent function to only use columns that exist in the database
-export async function createTimelineEvent(event: Omit<TimelineEvent, "id" | "created_at">) {
-  try {
-    logDbOperation("createTimelineEvent", { event })
-
-    // Let's log the event to see what fields we're trying to insert
-    console.log("Timeline event to create:", event)
-
-    // Map the TimelineEvent interface to the database schema
-    // Only include fields that are confirmed to exist in the database
-    const dbEvent = {
-      game_id: event.gameId,
-      start_time: event.startTime,
-      title: event.title,
-      category: event.category,
-      notes: event.notes,
-      clock_ref: event.clockRef,
-      // Removed fields that don't exist in the database:
-      // - location
-      // - end_time
-      // - components
-      // - audio_notes
-    }
-
-    // Log what we're actually inserting
-    console.log("Inserting into timeline_events:", dbEvent)
-
-    const { data, error } = await supabase.from("timeline_events").insert([dbEvent]).select()
-
-    if (error) {
-      console.error("Error creating timeline event:", error)
-      throw new Error(`Error creating timeline event: ${error.message}`)
-    }
-
-    // Map the database response back to our TimelineEvent type
-    if (data && data.length > 0) {
-      return {
-        id: data[0].id,
-        gameId: data[0].game_id,
-        startTime: data[0].start_time,
-        endTime: event.endTime, // Use the original endTime since it's not stored in DB
-        title: data[0].title,
-        category: data[0].category,
-        location: event.location, // Keep this in the returned object even though it's not in DB
-        notes: data[0].notes,
-        audioNotes: event.audioNotes, // Keep the original audioNotes since it's not stored in DB
-        clockRef: data[0].clock_ref,
-        components: [], // Since we're not storing components, return an empty array
-        createdAt: data[0].created_at,
-      }
-    }
-
-    throw new Error("No data returned after creating timeline event")
-  } catch (error) {
-    console.error("Error in createTimelineEvent:", error)
-    throw error
-  }
-}
-
-export async function updateTimelineEvent(id: string, event: Partial<TimelineEvent>) {
-  try {
-    logDbOperation("updateTimelineEvent", { id, event })
-
-    const { data, error } = await supabase.from("timeline_events").update(event).eq("id", id).select()
-
-    if (error) {
-      console.error(`Error updating timeline event ${id}:`, error)
-      throw new Error(`Error updating timeline event: ${error.message}`)
-    }
-
-    return data?.[0]
-  } catch (error) {
-    console.error(`Error in updateTimelineEvent for ID ${id}:`, error)
-    throw error
-  }
-}
-
-export async function deleteTimelineEvent(id: string) {
-  try {
-    logDbOperation("deleteTimelineEvent", { id })
-
-    const { error } = await supabase.from("timeline_events").delete().eq("id", id)
-
-    if (error) {
-      console.error(`Error deleting timeline event ${id}:`, error)
-      throw new Error(`Error deleting timeline event: ${error.message}`)
-    }
-
-    return true
-  } catch (error) {
-    console.error(`Error in deleteTimelineEvent for ID ${id}:`, error)
-    throw error
-  }
-}
-
-// Update the createShowFlowItem and updateShowFlowItem functions to handle elementId
-
-export async function createShowFlowItem(item: Omit<ShowFlowItem, "id" | "createdAt" | "updatedAt">) {
-  try {
-    logDbOperation("createShowFlowItem", { item })
-
-    // Map the ShowFlowItem interface to the database schema
-    const dbItem = {
-      game_id: item.gameId,
-      item_number: item.itemNumber,
-      start_time: item.startTime,
-      preset_time: item.presetTime,
-      duration: item.duration,
-      clock_ref: item.clockRef,
-      location: item.location,
-      audio_notes: item.audioNotes,
-      script_read: item.scriptRead,
-      board_look: item.boardLook,
-      category: item.category,
-      private_notes: item.privateNotes,
-      element_id: item.elementId, // Add element_id
-    }
-
-    const { data, error } = await supabase.from("show_flow_items").insert([dbItem]).select()
-
-    if (error) {
-      console.error("Error creating show flow item:", error)
-      throw new Error(`Error creating show flow item: ${error.message}`)
-    }
-
-    // If this item is linked to an element, create an element_usage record
-    if (item.elementId) {
-      await createElementUsage({
-        elementId: item.elementId,
-        gameId: item.gameId,
-        showFlowItemId: data[0].id,
-        placeholders: {}, // You would populate this with actual placeholders
-      })
-    }
-
-    return data?.[0]
-  } catch (error) {
-    console.error("Error in createShowFlowItem:", error)
-    throw error
-  }
-}
-
-export async function updateShowFlowItem(id: string, item: Partial<ShowFlowItem>) {
-  try {
-    logDbOperation("updateShowFlowItem", { id, item })
-
-    // Map the ShowFlowItem interface to the database schema
-    const dbUpdates: any = {}
-
-    if (item.gameId !== undefined) dbUpdates.game_id = item.gameId
-    if (item.itemNumber !== undefined) dbUpdates.item_number = item.itemNumber
-    if (item.startTime !== undefined) dbUpdates.start_time = item.startTime
-    if (item.presetTime !== undefined) dbUpdates.preset_time = item.presetTime
-    if (item.duration !== undefined) dbUpdates.duration = item.duration
-    if (item.clockRef !== undefined) dbUpdates.clock_ref = item.clockRef
-    if (item.location !== undefined) dbUpdates.location = item.location
-    if (item.audioNotes !== undefined) dbUpdates.audio_notes = item.audioNotes
-    if (item.scriptRead !== undefined) dbUpdates.script_read = item.scriptRead
-    if (item.boardLook !== undefined) dbUpdates.board_look = item.boardLook
-    if (item.category !== undefined) dbUpdates.category = item.category
-    if (item.privateNotes !== undefined) dbUpdates.private_notes = item.privateNotes
-    if (item.elementId !== undefined) dbUpdates.element_id = item.elementId // Add element_id
-
-    const { data, error } = await supabase.from("show_flow_items").update(dbUpdates).eq("id", id).select()
-
-    if (error) {
-      console.error(`Error updating show flow item ${id}:`, error)
-      throw new Error(`Error updating show flow item: ${error.message}`)
-    }
-
-    // If the element_id has changed, update the element_usage records
-    if (item.elementId !== undefined) {
-      // First, get the current show flow item to get the game_id
-      const { data: currentItem } = await supabase.from("show_flow_items").select("game_id").eq("id", id).single()
-
-      if (item.elementId) {
-        // Check if there's already an element_usage record for this show_flow_item
-        const { data: existingUsage } = await supabase
-          .from("element_usage")
-          .select("id")
-          .eq("show_flow_item_id", id)
-          .maybeSingle()
-
-        if (existingUsage) {
-          // Update the existing record
-          await supabase.from("element_usage").update({ element_id: item.elementId }).eq("id", existingUsage.id)
-        } else {
-          // Create a new element_usage record
-          await createElementUsage({
-            elementId: item.elementId,
-            gameId: currentItem.game_id,
-            showFlowItemId: id,
-            placeholders: {}, // You would populate this with actual placeholders
-          })
-        }
-      } else {
-        // If element_id is null, delete any element_usage records for this show_flow_item
-        await supabase.from("element_usage").delete().eq("show_flow_item_id", id)
-      }
-    }
-
-    return data?.[0]
-  } catch (error) {
-    console.error(`Error in updateShowFlowItem for ID ${id}:`, error)
-    throw error
-  }
-}
-
-// Helper function to process placeholders in a template
-export function processTemplate(template: string, placeholders: Record<string, string>): string {
-  if (!template) return ""
-
-  return template.replace(/\{([^}]+)\}/g, (match, key) => {
-    return placeholders[key] || match
-  })
-}
-
-// Asset functions
-export async function uploadAsset(file: File, path: string) {
-  try {
-    logDbOperation("uploadAsset", { fileName: file.name, path })
-
-    // Upload the file to Supabase Storage
-    const { data, error } = await supabase.storage.from("assets").upload(path, file, {
-      cacheControl: "3600",
-      upsert: true,
-    })
-
-    if (error) {
-      console.error("Error uploading asset:", error)
-      throw new Error(`Error uploading asset: ${error.message}`)
-    }
-
-    // Get the public URL for the uploaded file
-    const { data: urlData } = supabase.storage.from("assets").getPublicUrl(path)
-
-    // Create an asset record in the database
-    const assetRecord = {
-      file_name: file.name,
-      file_type: file.type,
-      file_size: file.size,
-      path: path,
-      url: urlData.publicUrl,
-      created_at: new Date().toISOString(),
-    }
-
-    const { data: assetData, error: assetError } = await supabase.from("assets").insert([assetRecord]).select()
-
-    if (assetError) {
-      console.error("Error creating asset record:", assetError)
-      throw new Error(`Error creating asset record: ${assetError.message}`)
-    }
-
-    return {
-      id: assetData[0].id,
-      fileName: assetData[0].file_name,
-      fileType: assetData[0].file_type,
-      fileSizeBytes: assetData[0].file_size,
-      path: assetData[0].path,
-      url: assetData[0].url,
-      uploadedAt: assetData[0].created_at,
-    }
-  } catch (error) {
-    console.error("Error in uploadAsset:", error)
-    throw error
-  }
-}
-
-export async function linkAssetToShowFlow(showFlowItemId: string, assetId: string) {
-  try {
-    logDbOperation("linkAssetToShowFlow", { showFlowItemId, assetId })
-
-    // Create a record in the show_flow_assets junction table
-    const linkRecord = {
-      show_flow_item_id: showFlowItemId,
-      asset_id: assetId,
-      created_at: new Date().toISOString(),
-    }
-
-    const { error } = await supabase.from("show_flow_assets").insert([linkRecord])
-
-    if (error) {
-      console.error("Error linking asset to show flow:", error)
-      throw new Error(`Error linking asset to show flow: ${error.message}`)
-    }
-
-    return true
-  } catch (error) {
-    console.error("Error in linkAssetToShowFlow:", error)
-    throw error
-  }
-}
-
-export async function linkElementToShowFlow(showFlowItemId: string, elementId: string) {
-  try {
-    logDbOperation("linkElementToShowFlow", { showFlowItemId, elementId })
-
-    // Create a record in the show_flow_elements junction table
-    const linkRecord = {
-      show_flow_item_id: showFlowItemId,
-      element_id: elementId,
-      created_at: new Date().toISOString(),
-    }
-
-    const { error } = await supabase.from("show_flow_elements").insert([linkRecord])
-
-    if (error) {
-      console.error("Error linking element to show flow:", error)
-      throw new Error(`Error linking element to show flow: ${error.message}`)
-    }
-
-    return true
-  } catch (error) {
-    console.error("Error in linkElementToShowFlow:", error)
-    throw error
-  }
-}
-
-// Update the bulkShiftTimelineEvents function to only update columns that exist
-export async function bulkShiftTimelineEvents(gameId: string, shiftSeconds: number) {
-  try {
-    logDbOperation("bulkShiftTimelineEvents", { gameId, shiftSeconds })
-
-    // First, get all timeline events for this game
-    const { data: events, error: fetchError } = await supabase.from("timeline_events").select("*").eq("game_id", gameId)
-
-    if (fetchError) {
-      console.error(`Error fetching timeline events for game ${gameId}:`, fetchError)
-      throw new Error(`Error fetching timeline events: ${fetchError.message}`)
-    }
-
-    if (!events || events.length === 0) {
-      console.log(`No timeline events found for game ${gameId}`)
-      return 0
-    }
-
-    // Update each event with the new time
-    const updates = events.map((event) => ({
-      id: event.id,
-      start_time: Math.max(0, event.start_time + shiftSeconds), // Ensure time doesn't go negative
-      // Removed end_time since it doesn't exist in the database
-    }))
-
-    // Perform the updates in batches
-    const batchSize = 100
-    let updatedCount = 0
-
-    for (let i = 0; i < updates.length; i += batchSize) {
-      const batch = updates.slice(i, i + batchSize)
-
-      for (const update of batch) {
-        const { error } = await supabase
-          .from("timeline_events")
-          .update({
-            start_time: update.start_time,
-            // Removed end_time
-          })
-          .eq("id", update.id)
-
-        if (error) {
-          console.error(`Error updating timeline event ${update.id}:`, error)
-        } else {
-          updatedCount++
-        }
-      }
-    }
-
-    return updatedCount
-  } catch (error) {
-    console.error(`Error in bulkShiftTimelineEvents for game ${gameId}:`, error)
-    throw error
-  }
-}
-
-export async function getGamesBySponsor(sponsorId: string) {
-  try {
-    logDbOperation("getGamesBySponsor", { sponsorId })
-
-    const { data, error } = await supabase
-      .from("games")
-      .select("*, seasons:season_id(*)")
-      .eq("sponsor_id", sponsorId)
-      .order("date", { ascending: false })
-
-    if (error) {
-      console.error(`Error fetching games for sponsor ${sponsorId}:`, error)
-      throw new Error(`Error fetching games: ${error.message}`)
-    }
-
-    return data || []
-  } catch (error) {
-    console.error(`Error in getGamesBySponsor for sponsor ${sponsorId}:`, error)
-    throw error
-  }
-}
-
-// Element Usage
-export async function getTimelineEventsByElement(elementId: string) {
-  try {
-    logDbOperation("getTimelineEventsByElement", { elementId })
-
-    const { data, error } = await supabase
-      .from("timeline_events")
-      .select("*, games:game_id(*)")
-      .eq("element_id", elementId)
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error(`Error fetching usage for element ${elementId}:`, error)
-      throw new Error(`Error fetching element usage: ${error.message}`)
-    }
-
-    return data || []
-  } catch (error) {
-    console.error(`Error in getTimelineEventsByElement for element ${elementId}:`, error)
-    throw error
-  }
-}
-
-// Test connection
-export async function testConnection() {
-  try {
-    logDbOperation("testConnection", "Testing database connection")
-
-    const startTime = Date.now()
-    const { data, error } = await supabase.from("seasons").select("count")
-    const endTime = Date.now()
-
-    if (error) {
-      console.error("Error testing connection:", error)
-      return {
-        success: false,
-        message: `Connection failed: ${error.message}`,
-        latency: null,
-      }
-    }
-
-    return {
-      success: true,
-      message: "Connection successful",
-      latency: endTime - startTime,
-      count: data?.[0]?.count,
-    }
-  } catch (error) {
-    console.error("Error in testConnection:", error)
-    return {
-      success: false,
-      message: `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
-      latency: null,
-    }
-  }
-}
-
-// Function to inspect the database schema
-export async function inspectDatabaseSchema() {
-  try {
-    // Get the schema for the games table
-    const { data, error } = await supabase.rpc("get_schema_info", { table_name: "games" })
-
-    if (error) {
-      console.error("Error inspecting schema:", error)
-      return null
-    }
-
-    return data
-  } catch (error) {
-    console.error("Error in inspectDatabaseSchema:", error)
-    return null
-  }
-}
-
-export async function testElementsSchema() {
-  try {
-    logDbOperation("testElementsSchema", "Testing elements schema")
-
-    // Try to fetch all elements
-    const { data: elements, error: elementsError } = await supabase.from("elements").select("*").limit(5)
-
-    if (elementsError) {
-      console.error("Error fetching elements:", elementsError)
-      return { success: false, message: elementsError.message }
-    }
-
-    // Try to fetch all sports
-    const { data: sports, error: sportsError } = await supabase.from("sports").select("*").limit(5)
-
-    if (sportsError) {
-      console.error("Error fetching sports:", sportsError)
-      return { success: false, message: sportsError.message }
-    }
-
-    return {
-      success: true,
-      message: "Successfully connected to elements schema",
-      elements: elements || [],
-      sports: sports || [],
-      elementsCount: elements?.length || 0,
-      sportsCount: sports?.length || 0,
-    }
-  } catch (error) {
-    console.error("Error testing elements schema:", error)
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : String(error),
-    }
-  }
-}
+// Update the createSponsor function to match our form fields
+// export async function createSponsor(sponsor: {
+//   name: string
+//   logo_url?: string
+//   brand_color?: string
+//   contact_name?: string
+//   contact_email?: string
+//   contact_phone?: string
+//   notes?: string
+//   start_date?: string
+//   end_date?: string
+//   sports?: string[]
+//   seasons?: string[]
+//   deliverables?: any[]
+// }) {
+//   try {
+//     logDbOperation("createSponsor", { sponsor })
+
+//     const { data, error } = await supabase.from("sponsors").insert([sponsor]).select()
+
+//     if (error) {
+//       console.error("Error creating sponsor:", error)
+//       throw new Error(`Error creating sponsor: ${error.message}`)
+//     }
+
+//     return data?.[0]
+//   } catch (error) {
+//     console.error("Error in createSponsor:", error)
+//     throw error
+//   }
+// }
+
+// export async function updateSponsor(id: string, sponsor: Partial<Sponsor>) {
+//   try {
+//     logDbOperation("updateSponsor", { id, sponsor })
+
+//     const { data, error } = await supabase.from("sponsors").update(sponsor).eq("id", id).select()
+
+//     if (error) {
+//       console.error(`Error updating sponsor ${id}:`, error)
+//       throw new Error(`Error updating sponsor: ${error.message}`)
+//     }
+
+//     return data?.[0]
+//   } catch (error) {
+//     console.error(`Error in updateSponsor for ID ${id}:`, error)
+//     throw error
+//   }
+// }
 
